@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A22 Films — Production Toolkit</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Outfit:wght@200;300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #080808;
+    --surface-1: #111111;
+    --surface-2: #1a1a1a;
+    --surface-3: #222222;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --text-primary: #f2f2f7;
+    --text-secondary: #aeaeb2;
+    --text-tertiary: #636366;
+    --blue: #0A84FF;
+    --green: #30D158;
+    --orange: #FF9F0A;
+    --red: #FF453A;
+    --purple: #BF5AF2;
+    --cyan: #5AC8FA;
+    --yellow: #FFD60A;
+    --font: 'Outfit', system-ui, -apple-system, sans-serif;
+    --mono: 'DM Mono', 'SF Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Subtle noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .header-brand { display: flex; align-items: center; gap: 14px; }
+  .brand-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; letter-spacing: -1px;
+    color: white;
+  }
+  .brand-name {
+    font-size: 15px; font-weight: 600; color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+  .brand-sub { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.5px; text-transform: uppercase; }
+  .header-project {
+    text-align: center;
+  }
+  .project-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,69,58,0.12);
+    border: 1px solid rgba(255,69,58,0.2);
+    color: #FF6B61;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .project-title {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+  .header-meta { text-align: right; }
+  .meta-item { font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px; }
+  .meta-item span { color: var(--text-secondary); font-weight: 500; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; gap: 2px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex: 1; min-width: 140px;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 10px 16px; border: none; cursor: pointer;
+    background: transparent; color: var(--text-secondary);
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    border-radius: 10px; transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { background: var(--surface-2); color: var(--text-primary); }
+  .tab-btn.active {
+    background: var(--surface-3);
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+  .tab-icon { font-size: 15px; }
+
+  /* ── PANELS ── */
+  .panel { display: none; animation: fadeIn 0.25s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.8px;
+    color: var(--text-primary);
+  }
+  .section-subtitle { font-size: 13px; color: var(--text-tertiary); margin-top: 3px; }
+  .section-badge {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-tertiary);
+    border: 1px solid var(--border-strong); padding: 4px 10px; border-radius: 6px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; }
+
+  /* ── STATS ROW ── */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 700; letter-spacing: -1px; color: var(--text-primary); }
+  .stat-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+  .stat-card.blue .stat-value { color: var(--blue); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.orange .stat-value { color: var(--orange); }
+  .stat-card.red .stat-value { color: var(--red); }
+  .stat-card.purple .stat-value { color: var(--purple); }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    padding: 10px 16px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-tertiary); text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .data-table td {
+    padding: 12px 16px;
+    font-size: 13px; color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table .dept-header td {
+    background: rgba(255,255,255,0.03);
+    font-weight: 600; color: var(--text-primary); font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 8px 16px;
+  }
+  .data-table .total-row td {
+    background: rgba(10,132,255,0.05);
+    font-weight: 600; color: var(--text-primary); font-size: 14px;
+    border-top: 1px solid rgba(10,132,255,0.2);
+  }
+
+  .amount { font-family: var(--mono); font-size: 12px; color: var(--text-primary); font-weight: 500; }
+  .amount.highlight { color: var(--green); }
+  .amount.total { color: var(--blue); font-size: 14px; }
+
+  /* ── STATUS PILLS ── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.2px;
+  }
+  .pill.green { background: rgba(48,209,88,0.12); color: #30D158; border: 1px solid rgba(48,209,88,0.2); }
+  .pill.orange { background: rgba(255,159,10,0.12); color: #FF9F0A; border: 1px solid rgba(255,159,10,0.2); }
+  .pill.red { background: rgba(255,69,58,0.12); color: #FF453A; border: 1px solid rgba(255,69,58,0.2); }
+  .pill.blue { background: rgba(10,132,255,0.12); color: #0A84FF; border: 1px solid rgba(10,132,255,0.2); }
+  .pill.grey { background: rgba(142,142,147,0.12); color: #8E8E93; border: 1px solid rgba(142,142,147,0.2); }
+  .pill.purple { background: rgba(191,90,242,0.12); color: #BF5AF2; border: 1px solid rgba(191,90,242,0.2); }
+
+  /* ── GANTT ── */
+  .gantt-wrap { overflow-x: auto; }
+  .gantt-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  .gantt-table th {
+    padding: 8px 10px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-tertiary); text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .gantt-table th.label-col { text-align: left; min-width: 200px; }
+  .gantt-table td {
+    padding: 10px 10px;
+    font-size: 12px; color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    text-align: center; vertical-align: middle;
+  }
+  .gantt-table td.label-col { text-align: left; padding-left: 16px; }
+  .gantt-table tr:hover td { background: rgba(255,255,255,0.015); }
+  .gantt-bar {
+    height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+    white-space: nowrap; overflow: hidden;
+  }
+  .gantt-bar.blue { background: rgba(10,132,255,0.25); border: 1px solid rgba(10,132,255,0.4); color: #0A84FF; }
+  .gantt-bar.green { background: rgba(48,209,88,0.2); border: 1px solid rgba(48,209,88,0.3); color: #30D158; }
+  .gantt-bar.orange { background: rgba(255,159,10,0.2); border: 1px solid rgba(255,159,10,0.3); color: #FF9F0A; }
+  .gantt-bar.purple { background: rgba(191,90,242,0.2); border: 1px solid rgba(191,90,242,0.3); color: #BF5AF2; }
+  .gantt-bar.red { background: rgba(255,69,58,0.18); border: 1px solid rgba(255,69,58,0.3); color: #FF453A; }
+  .gantt-bar.cyan { background: rgba(90,200,250,0.18); border: 1px solid rgba(90,200,250,0.3); color: #5AC8FA; }
+  .gantt-cell-multi { display: flex; gap: 3px; }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    height: 4px; background: var(--surface-3);
+    border-radius: 2px; overflow: hidden; margin-top: 6px;
+  }
+  .progress-fill { height: 100%; border-radius: 2px; }
+
+  /* ── SHOOTING PLAN ── */
+  .day-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .day-num {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--blue); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .day-label { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .day-meta { font-size: 12px; color: var(--text-tertiary); }
+
+  /* ── SCENE CARD ── */
+  .scene-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 100px 80px 120px 90px;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .scene-row:hover { background: rgba(255,255,255,0.015); }
+  .scene-num {
+    padding: 14px 12px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text-tertiary); font-weight: 500;
+    text-align: center;
+  }
+  .scene-main { padding: 14px 12px 14px 0; }
+  .scene-name { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .scene-desc { font-size: 11px; color: var(--text-tertiary); line-height: 1.4; }
+  .scene-cell { padding: 14px 12px; font-size: 12px; color: var(--text-secondary); }
+  .scene-header {
+    display: grid;
+    grid-template-columns: 40px 1fr 100px 80px 120px 90px;
+    gap: 0;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .scene-header span {
+    padding: 8px 12px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--text-tertiary);
+  }
+  .scene-header span:first-child { text-align: center; }
+
+  /* ── POST TIMELINE ── */
+  .post-week {
+    margin-bottom: 12px;
+  }
+  .week-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text-tertiary); padding: 10px 20px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .post-task-row {
+    display: grid; grid-template-columns: 1fr 120px 100px 130px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .post-task-row:hover { background: rgba(255,255,255,0.015); }
+  .post-task-main { padding: 14px 20px; }
+  .task-name { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .task-owner { font-size: 11px; color: var(--text-tertiary); }
+  .post-task-cell { padding: 14px 12px; font-size: 12px; color: var(--text-secondary); }
+  .post-header {
+    display: grid; grid-template-columns: 1fr 120px 100px 130px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .post-header span {
+    padding: 8px 12px 8px 20px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--text-tertiary);
+  }
+
+  /* ── SOCIAL MEDIA ── */
+  .platform-section { margin-bottom: 20px; }
+  .platform-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  .platform-icon { font-size: 18px; }
+  .platform-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .platform-handle { font-size: 12px; color: var(--text-tertiary); }
+  .platform-kpi { margin-left: auto; display: flex; gap: 16px; }
+  .kpi-item { text-align: right; }
+  .kpi-val { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .kpi-lbl { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .social-row {
+    display: grid; grid-template-columns: 120px 1fr 100px 80px 100px 90px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .social-row:hover { background: rgba(255,255,255,0.015); }
+  .social-cell { padding: 12px 14px; font-size: 12px; color: var(--text-secondary); }
+  .social-cell.primary { color: var(--text-primary); font-weight: 500; }
+  .social-header {
+    display: grid; grid-template-columns: 120px 1fr 100px 80px 100px 90px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  .social-header span {
+    padding: 8px 14px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--text-tertiary);
+  }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  /* ── FOOTNOTE ── */
+  .footnote {
+    margin-top: 40px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footnote-brand { font-size: 12px; color: var(--text-tertiary); }
+  .footnote-brand strong { color: var(--text-secondary); }
+  .footnote-copy { font-size: 11px; color: var(--text-tertiary); font-family: var(--mono); }
+
+  /* GRID helpers */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-24 { margin-bottom: 24px; }
+
+  @media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .scene-row, .scene-header { grid-template-columns: 40px 1fr 100px 90px; }
+    .scene-row > :nth-child(4), .scene-row > :nth-child(5),
+    .scene-header > :nth-child(4), .scene-header > :nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="brand-logo">A²²</div>
+      <div>
+        <div class="brand-name">A22 Films</div>
+        <div class="brand-sub">Production Toolkit</div>
+      </div>
+    </div>
+    <div class="header-project">
+      <div class="project-badge">🎬 Horror Short</div>
+      <div class="project-title">"LIANNE"</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item">Director <span>A. Ruiz</span></div>
+      <div class="meta-item">Producer <span>A22 Films</span></div>
+      <div class="meta-item">Location <span>Amsterdam, NL</span></div>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs">
+    <button class="tab-btn active" onclick="showTab('estimate')"><span class="tab-icon">💰</span> Budget Estimate</button>
+    <button class="tab-btn" onclick="showTab('timeline')"><span class="tab-icon">📅</span> Project Timeline</button>
+    <button class="tab-btn" onclick="showTab('postpro')"><span class="tab-icon">🎞</span> Post-Production</button>
+    <button class="tab-btn" onclick="showTab('shooting')"><span class="tab-icon">🎥</span> Shooting Plan</button>
+    <button class="tab-btn" onclick="showTab('social')"><span class="tab-icon">📲</span> Distribution</button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PANEL 1: PRODUCTION ESTIMATE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="panel active" id="panel-estimate">
+    <div class="section-header">
+      <div>
+        <div class="section-title">💰 Production Estimate</div>
+        <div class="section-subtitle">Full budget breakdown by department · "LIANNE" Horror Short · Amsterdam</div>
+      </div>
+      <div class="section-badge">v2.1 · Apr 2026</div>
+    </div>
+
+    <div class="stats-grid mb-24">
+      <div class="stat-card blue"><div class="stat-label">Total Budget</div><div class="stat-value">€14,200</div><div class="stat-sub">All departments incl. contingency</div></div>
+      <div class="stat-card"><div class="stat-label">Shoot Days</div><div class="stat-value">4</div><div class="stat-sub">+ 2 pre-production days</div></div>
+      <div class="stat-card orange"><div class="stat-label">Contingency</div><div class="stat-value">€1,100</div><div class="stat-sub">8% of base budget</div></div>
+      <div class="stat-card green"><div class="stat-label">Post Budget</div><div class="stat-value">€3,400</div><div class="stat-sub">24% of total</div></div>
+      <div class="stat-card purple"><div class="stat-label">Crew Size</div><div class="stat-value">14</div><div class="stat-sub">On-set crew members</div></div>
+    </div>
+
+    <div class="card mb-24">
+      <div class="card-header">
+        <span class="card-title">Department Breakdown</span>
+        <span class="pill blue">13,100 base · +8% contingency</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:200px">Category</th>
+            <th>Description</th>
+            <th style="width:60px">Days</th>
+            <th style="width:90px">Rate/Day</th>
+            <th style="width:60px">Qty</th>
+            <th style="width:110px">Subtotal</th>
+            <th style="width:100px">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- DIRECTING -->
+          <tr class="dept-header"><td colspan="7">🎬 Direction & Script</td></tr>
+          <tr>
+            <td>Director</td><td>A. Ruiz — Creative lead, all shoot days</td>
+            <td>6</td><td class="amount">€200</td><td>1</td>
+            <td class="amount highlight">€1,200</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Script Supervisor</td><td>Continuity tracking, scene reports</td>
+            <td>4</td><td class="amount">€150</td><td>1</td>
+            <td class="amount highlight">€600</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+
+          <!-- CAMERA -->
+          <tr class="dept-header"><td colspan="7">📷 Camera Department</td></tr>
+          <tr>
+            <td>DOP / Cinematographer</td><td>BMPCC 6K Pro + Sigma primes</td>
+            <td>4</td><td class="amount">€350</td><td>1</td>
+            <td class="amount highlight">€1,400</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Camera Operator (B-cam)</td><td>Sony FX3 — additional angles</td>
+            <td>2</td><td class="amount">€200</td><td>1</td>
+            <td class="amount highlight">€400</td><td><span class="pill orange">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Camera Equipment Rental</td><td>BMPCC 6K, lenses, rigs, filters, media</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€800</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Focus Puller / 1st AC</td><td>Wireless FF, lens kit management</td>
+            <td>4</td><td class="amount">€160</td><td>1</td>
+            <td class="amount highlight">€640</td><td><span class="pill orange">Pending</span></td>
+          </tr>
+
+          <!-- SOUND -->
+          <tr class="dept-header"><td colspan="7">🎙 Sound Department</td></tr>
+          <tr>
+            <td>Sound Recordist</td><td>Boom + wireless lavs, Sound Devices</td>
+            <td>4</td><td class="amount">€250</td><td>1</td>
+            <td class="amount highlight">€1,000</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Sound Equipment</td><td>Zaxcom Maxx, MKH416, 4x wireless</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€300</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+
+          <!-- LIGHTING -->
+          <tr class="dept-header"><td colspan="7">💡 Lighting & Grip</td></tr>
+          <tr>
+            <td>Gaffer</td><td>Lighting design + electrical</td>
+            <td>4</td><td class="amount">€200</td><td>1</td>
+            <td class="amount highlight">€800</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Lighting Package</td><td>Aputure 600D, 300D II, Gemini, stands</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€600</td><td><span class="pill orange">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Key Grip</td><td>C-stands, flags, dollies, slider</td>
+            <td>4</td><td class="amount">€150</td><td>1</td>
+            <td class="amount highlight">€600</td><td><span class="pill grey">Negotiating</span></td>
+          </tr>
+
+          <!-- ART -->
+          <tr class="dept-header"><td colspan="7">🎨 Art Department & Costume</td></tr>
+          <tr>
+            <td>Production Designer</td><td>Set dressing, props sourcing</td>
+            <td>5</td><td class="amount">€180</td><td>1</td>
+            <td class="amount highlight">€900</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Props & Set Dressing Budget</td><td>Furniture, horror elements, breakables</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€500</td><td><span class="pill orange">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Costume / Wardrobe</td><td>6 characters, 3 costume changes each</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€300</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Makeup & Hair (SFX)</td><td>Practical horror SFX makeup</td>
+            <td>4</td><td class="amount">€200</td><td>1</td>
+            <td class="amount highlight">€800</td><td><span class="pill orange">Pending</span></td>
+          </tr>
+
+          <!-- LOGISTICS -->
+          <tr class="dept-header"><td colspan="7">🚐 Logistics & Location</td></tr>
+          <tr>
+            <td>Location Fee (Airbnb)</td><td>Remote house, 5 nights</td>
+            <td>—</td><td class="amount">€220</td><td>5</td>
+            <td class="amount highlight">€1,100</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Transport / Van Rental</td><td>Crew transport + gear, 6 days</td>
+            <td>—</td><td class="amount">€90</td><td>6</td>
+            <td class="amount highlight">€540</td><td><span class="pill orange">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Catering</td><td>3 meals/day × 14 crew × 4 days</td>
+            <td>—</td><td class="amount">€22</td><td>56</td>
+            <td class="amount highlight">€660</td><td><span class="pill green">Confirmed</span></td>
+          </tr>
+          <tr>
+            <td>Insurance (production)</td><td>Kit, liability, cancellation</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€360</td><td><span class="pill blue">In Review</span></td>
+          </tr>
+
+          <!-- POST -->
+          <tr class="dept-header"><td colspan="7">🖥 Post-Production</td></tr>
+          <tr>
+            <td>Editor</td><td>Picture lock, 3 revision rounds</td>
+            <td>10</td><td class="amount">€140</td><td>1</td>
+            <td class="amount highlight">€1,400</td><td><span class="pill grey">Not started</span></td>
+          </tr>
+          <tr>
+            <td>Colorist</td><td>DaVinci Resolve grade, festival master</td>
+            <td>3</td><td class="amount">€300</td><td>1</td>
+            <td class="amount highlight">€900</td><td><span class="pill grey">Not started</span></td>
+          </tr>
+          <tr>
+            <td>Sound Design & Mix</td><td>Foley, atmospheres, 5.1 mix</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€800</td><td><span class="pill grey">Not started</span></td>
+          </tr>
+          <tr>
+            <td>Score / Music</td><td>Original horror score, sync license</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€300</td><td><span class="pill grey">Not started</span></td>
+          </tr>
+          <tr>
+            <td>VFX (minimal)</td><td>Title sequence, 3 compositing shots</td>
+            <td>—</td><td class="amount">—</td><td>1</td>
+            <td class="amount highlight">€400</td><td><span class="pill grey">Not started</span></td>
+          </tr>
+
+          <!-- TOTALS -->
+          <tr class="total-row">
+            <td colspan="5"><strong>Base Budget</strong></td>
+            <td class="amount total"><strong>€13,100</strong></td>
+            <td></td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="5"><strong>Contingency (8%)</strong></td>
+            <td class="amount" style="color:var(--orange)"><strong>€1,100</strong></td>
+            <td></td>
+          </tr>
+          <tr class="total-row">
+            <td colspan="5" style="font-size:15px"><strong>TOTAL PRODUCTION BUDGET</strong></td>
+            <td class="amount" style="color:var(--blue); font-size:16px"><strong>€14,200</strong></td>
+            <td><span class="pill blue">Working</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">📊 Budget Split by Phase</span></div>
+        <div style="padding:16px 20px">
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-size:13px;color:var(--text-secondary)">🎬 Pre-Production</span>
+              <span style="font-family:var(--mono);font-size:12px;color:var(--blue)">€1,200 · 9%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:9%;background:var(--blue)"></div></div>
+          </div>
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-size:13px;color:var(--text-secondary)">📷 Production (crew + equip)</span>
+              <span style="font-family:var(--mono);font-size:12px;color:var(--orange)">€7,600 · 53%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:53%;background:var(--orange)"></div></div>
+          </div>
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-size:13px;color:var(--text-secondary)">🖥 Post-Production</span>
+              <span style="font-family:var(--mono);font-size:12px;color:var(--purple)">€3,800 · 27%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:27%;background:var(--purple)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-size:13px;color:var(--text-secondary)">⚡ Contingency</span>
+              <span style="font-family:var(--mono);font-size:12px;color:var(--green)">€1,100 · 8%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:8%;background:var(--green)"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">⚠️ Flags & Notes</span></div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+          <div style="padding:10px 14px;background:rgba(255,159,10,0.06);border:1px solid rgba(255,159,10,0.15);border-radius:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:2px">⚠️ B-camera operator unconfirmed</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">Follow up before May 10. Affects Day 2 & 4 shot coverage.</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(255,159,10,0.06);border:1px solid rgba(255,159,10,0.15);border-radius:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:2px">⚠️ SFX makeup artist TBC</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">2 candidates shortlisted. Decision needed by May 5.</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.15);border-radius:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:2px">✅ Location locked & deposited</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">€440 deposit paid. Balance due on arrival.</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(10,132,255,0.06);border:1px solid rgba(10,132,255,0.15);border-radius:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:2px">ℹ️ Insurance under review</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">Quote received. Waiting for approval by producer.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PANEL 2: PROJECT TIMELINE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="panel" id="panel-timeline">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📅 Project Timeline</div>
+        <div class="section-subtitle">Full production schedule — "LIANNE" · April – September 2026</div>
+      </div>
+      <div class="section-badge">6 months · 26 weeks</div>
+    </div>
+
+    <div class="stats-grid mb-24">
+      <div class="stat-card blue"><div class="stat-label">Current Phase</div><div class="stat-value" style="font-size:18px">Pre-Pro</div><div class="stat-sub">Week 4 of 6</div></div>
+      <div class="stat-card green"><div class="stat-label">Days to Shoot</div><div class="stat-value">28</div><div class="stat-sub">Starting June 12</div></div>
+      <div class="stat-card orange"><div class="stat-label">Open Tasks</div><div class="stat-value">11</div><div class="stat-sub">6 urgent, 5 low priority</div></div>
+      <div class="stat-card"><div class="stat-label">Festival Target</div><div class="stat-value" style="font-size:18px">IFFR '27</div><div class="stat-sub">Deadline: Nov 15, 2026</div></div>
+    </div>
+
+    <!-- Master Gantt -->
+    <div class="card mb-20">
+      <div class="card-header">
+        <span class="card-title">📊 Master Gantt Chart</span>
+        <span class="pill blue">Apr → Sep 2026</span>
+      </div>
+      <div class="gantt-wrap">
+        <table class="gantt-table">
+          <thead>
+            <tr>
+              <th class="label-col">Phase / Task</th>
+              <th>Apr W3</th><th>Apr W4</th><th>May W1</th><th>May W2</th><th>May W3</th><th>May W4</th>
+              <th>Jun W1</th><th>Jun W2</th><th>Jun W3</th><th>Jun W4</th>
+              <th>Jul W1</th><th>Jul W2</th><th>Jul W3</th><th>Jul W4</th>
+              <th>Aug W1</th><th>Aug W2</th><th>Aug W3</th><th>Aug W4</th>
+              <th>Sep W1</th><th>Sep W2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Development -->
+            <tr>
+              <td class="label-col" style="color:var(--text-primary);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">🎬 Development</td>
+              <td colspan="20"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Script final draft</td>
+              <td colspan="2"><div class="gantt-bar blue">Final</div></td>
+              <td colspan="18"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Shot list & storyboard</td>
+              <td></td>
+              <td colspan="3"><div class="gantt-bar cyan">Storyboard</div></td>
+              <td colspan="16"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Mood board & references</td>
+              <td colspan="2"><div class="gantt-bar purple">Visuals</div></td>
+              <td colspan="18"></td>
+            </tr>
+
+            <!-- Pre-Production -->
+            <tr>
+              <td class="label-col" style="color:var(--text-primary);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;padding-top:12px">📋 Pre-Production</td>
+              <td colspan="20"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Casting</td>
+              <td colspan="4"><div class="gantt-bar blue">Casting sessions</div></td>
+              <td colspan="16"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Crew hiring</td>
+              <td colspan="3"><div class="gantt-bar blue">Crew outreach</div></td>
+              <td colspan="17"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Location scouting</td>
+              <td colspan="2"><div class="gantt-bar orange">Scout</div></td>
+              <td colspan="1"><div class="gantt-bar green">Lock</div></td>
+              <td colspan="17"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Budget & permits</td>
+              <td></td>
+              <td colspan="3"><div class="gantt-bar orange">Finalize</div></td>
+              <td colspan="16"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Art dept prep + costumes</td>
+              <td colspan="2"></td>
+              <td colspan="4"><div class="gantt-bar purple">Design + Build</div></td>
+              <td colspan="14"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Tech recce</td>
+              <td colspan="5"></td>
+              <td colspan="1"><div class="gantt-bar cyan">Recce</div></td>
+              <td colspan="14"></td>
+            </tr>
+
+            <!-- Production -->
+            <tr>
+              <td class="label-col" style="color:var(--text-primary);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;padding-top:12px">🎥 Production</td>
+              <td colspan="20"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Principal photography (4 days)</td>
+              <td colspan="6"></td>
+              <td colspan="2"><div class="gantt-bar red">🎬 SHOOT</div></td>
+              <td colspan="12"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Data wrangling + backup</td>
+              <td colspan="6"></td>
+              <td colspan="2"><div class="gantt-bar orange">Backup</div></td>
+              <td colspan="12"></td>
+            </tr>
+            <tr>
+              <td class="label-col">BTS content capture</td>
+              <td colspan="6"></td>
+              <td colspan="2"><div class="gantt-bar purple">BTS</div></td>
+              <td colspan="12"></td>
+            </tr>
+
+            <!-- Post-Production -->
+            <tr>
+              <td class="label-col" style="color:var(--text-primary);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;padding-top:12px">🖥 Post-Production</td>
+              <td colspan="20"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Offline editing (assembly)</td>
+              <td colspan="8"></td>
+              <td colspan="3"><div class="gantt-bar blue">Assembly cut</div></td>
+              <td colspan="9"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Fine cut + director review</td>
+              <td colspan="10"></td>
+              <td colspan="3"><div class="gantt-bar blue">Fine cut</div></td>
+              <td colspan="7"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Sound design + Foley</td>
+              <td colspan="11"></td>
+              <td colspan="4"><div class="gantt-bar cyan">Sound</div></td>
+              <td colspan="5"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Original score</td>
+              <td colspan="12"></td>
+              <td colspan="4"><div class="gantt-bar purple">Score</div></td>
+              <td colspan="4"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Color grading</td>
+              <td colspan="14"></td>
+              <td colspan="3"><div class="gantt-bar orange">Grade</div></td>
+              <td colspan="3"></td>
+            </tr>
+            <tr>
+              <td class="label-col">VFX + titles</td>
+              <td colspan="15"></td>
+              <td colspan="2"><div class="gantt-bar purple">VFX</div></td>
+              <td colspan="3"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Final mix & QC</td>
+              <td colspan="16"></td>
+              <td colspan="2"><div class="gantt-bar green">Mix + QC</div></td>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Picture lock + DCP export</td>
+              <td colspan="18"></td>
+              <td colspan="2"><div class="gantt-bar red">🏁 Lock</div></td>
+            </tr>
+
+            <!-- Distribution -->
+            <tr>
+              <td class="label-col" style="color:var(--text-primary);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;padding-top:12px">📲 Distribution</td>
+              <td colspan="20"></td>
+            </tr>
+            <tr>
+              <td class="label-col">Festival submissions</td>
+              <td colspan="18"></td>
+              <td colspan="2"><div class="gantt-bar green">Submit</div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Key Milestones -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">🏁 Key Milestones</span></div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Milestone</th><th>Target Date</th><th>Owner</th><th>Dependencies</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Script locked</td><td class="amount">Apr 25, 2026</td><td>Director</td><td>—</td><td><span class="pill green">✅ Done</span></td></tr>
+          <tr><td>Full crew confirmed</td><td class="amount">May 10, 2026</td><td>Producer</td><td>Budget approval</td><td><span class="pill orange">⏳ In progress</span></td></tr>
+          <tr><td>Casting complete</td><td class="amount">May 15, 2026</td><td>Director + Casting</td><td>Script lock</td><td><span class="pill orange">⏳ In progress</span></td></tr>
+          <tr><td>Tech recce</td><td class="amount">Jun 5, 2026</td><td>DOP + Director</td><td>Crew confirmed</td><td><span class="pill grey">🔲 Upcoming</span></td></tr>
+          <tr><td>Principal photography</td><td class="amount">Jun 12–15, 2026</td><td>All depts</td><td>All pre-pro complete</td><td><span class="pill grey">🔲 Upcoming</span></td></tr>
+          <tr><td>Assembly cut</td><td class="amount">Jul 10, 2026</td><td>Editor</td><td>Shoot wrap + data delivery</td><td><span class="pill grey">🔲 Upcoming</span></td></tr>
+          <tr><td>Picture lock</td><td class="amount">Aug 28, 2026</td><td>Director + Editor</td><td>All post disciplines</td><td><span class="pill grey">🔲 Upcoming</span></td></tr>
+          <tr><td>Festival premiere target</td><td class="amount">Jan 2027 (IFFR)</td><td>Producer</td><td>Picture lock + DCP</td><td><span class="pill blue">🎯 Target</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PANEL 3: POST-PRODUCTION -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="panel" id="panel-postpro">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🎞 Post-Production Schedule</div>
+        <div class="section-subtitle">Editing · Color · Sound · VFX · Delivery — "LIANNE" · Jul – Sep 2026</div>
+      </div>
+      <div class="section-badge">12 weeks</div>
+    </div>
+
+    <div class="stats-grid mb-24">
+      <div class="stat-card blue"><div class="stat-label">Post Budget</div><div class="stat-value">€3,800</div><div class="stat-sub">Edit + Color + Sound + Score</div></div>
+      <div class="stat-card"><div class="stat-label">Total Days</div><div class="stat-value">38</div><div class="stat-sub">Across all post disciplines</div></div>
+      <div class="stat-card orange"><div class="stat-label">Revision Rounds</div><div class="stat-value">3</div><div class="stat-sub">Locked after round 3</div></div>
+      <div class="stat-card green"><div class="stat-label">Deliverables</div><div class="stat-value">6</div><div class="stat-sub">DCP, ProRes, H264, Trailer, etc.</div></div>
+      <div class="stat-card purple"><div class="stat-label">Target Lock</div><div class="stat-value" style="font-size:18px">Aug 28</div><div class="stat-sub">2026 — IFFR deadline buffer</div></div>
+    </div>
+
+    <div class="card mb-20">
+      <div class="card-header"><span class="card-title">📋 Week-by-Week Schedule</span><span class="pill grey">Jul 1 → Sep 12, 2026</span></div>
+
+      <!-- HEADERS -->
+      <div class="post-header">
+        <span>Task</span><span>Assigned to</span><span>Duration</span><span>Status</span>
+      </div>
+
+      <!-- WEEK 1-2: Assembly -->
+      <div class="week-label"><span>📁 Week 1–2 · July 1–12 · Assembly Cut</span><span class="pill blue">In Queue</span></div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Media ingest & organization</div><div class="task-owner">Editor + DIT</div></div>
+        <div class="post-task-cell">Editor — Maria V.</div>
+        <div class="post-task-cell">2 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Sync audio to picture (all footage)</div><div class="task-owner">DaVinci Resolve / Premiere</div></div>
+        <div class="post-task-cell">Editor — Maria V.</div>
+        <div class="post-task-cell">1 day</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Assembly cut (all scenes rough)</div><div class="task-owner">First rough pass, no trimming</div></div>
+        <div class="post-task-cell">Editor — Maria V.</div>
+        <div class="post-task-cell">4 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Director review (assembly)</div><div class="task-owner">Notes session with director</div></div>
+        <div class="post-task-cell">Director + Editor</div>
+        <div class="post-task-cell">1 day</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+
+      <!-- WEEK 3-5: Fine Cut -->
+      <div class="week-label"><span>✂️ Week 3–5 · July 13 – Aug 1 · Fine Cut & Revision</span><span class="pill grey">Not started</span></div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Fine cut Round 1 — pacing & performance</div><div class="task-owner">Tighten assembly, remove redundant coverage</div></div>
+        <div class="post-task-cell">Editor — Maria V.</div>
+        <div class="post-task-cell">5 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Director review + notes Round 1</div><div class="task-owner">Written notes delivered within 3 days</div></div>
+        <div class="post-task-cell">Director</div>
+        <div class="post-task-cell">2 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Revision Round 2 — structural changes</div><div class="task-owner">Scene reordering, cuts, timing adjustments</div></div>
+        <div class="post-task-cell">Editor — Maria V.</div>
+        <div class="post-task-cell">3 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Producer + director final notes</div><div class="task-owner">Last creative alignment before lock</div></div>
+        <div class="post-task-cell">Director + Producer</div>
+        <div class="post-task-cell">1 day</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Revision Round 3 — final polish</div><div class="task-owner">Micro-trimming, sound temp track</div></div>
+        <div class="post-task-cell">Editor — Maria V.</div>
+        <div class="post-task-cell">2 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">🔒 PICTURE LOCK (edit)</div><div class="task-owner">No further changes to edit after this</div></div>
+        <div class="post-task-cell">Director sign-off</div>
+        <div class="post-task-cell">Milestone</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+
+      <!-- WEEK 6-8: Sound -->
+      <div class="week-label"><span>🎙 Week 6–8 · Aug 2–15 · Sound Design & Score</span><span class="pill grey">Not started</span></div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Sound edit — dialogue cleanup (ADR if needed)</div><div class="task-owner">Remove noise, match levels, ADR sessions</div></div>
+        <div class="post-task-cell">Sound — Kees B.</div>
+        <div class="post-task-cell">3 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Foley recording & edit</div><div class="task-owner">Steps, cloth, props — horror atmosphere</div></div>
+        <div class="post-task-cell">Sound — Kees B.</div>
+        <div class="post-task-cell">2 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Horror atmospheres & SFX design</div><div class="task-owner">Ambiences, jump scare layers, tension builds</div></div>
+        <div class="post-task-cell">Sound — Kees B.</div>
+        <div class="post-task-cell">3 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Original score composition</div><div class="task-owner">Strings-led horror score, sync to picture</div></div>
+        <div class="post-task-cell">Composer — TBC</div>
+        <div class="post-task-cell">7 days</div>
+        <div class="post-task-cell"><span class="pill orange">Composer TBC</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Final 5.1 mix + stereo downmix</div><div class="task-owner">Dialogue, music, FX balanced</div></div>
+        <div class="post-task-cell">Sound — Kees B.</div>
+        <div class="post-task-cell">2 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+
+      <!-- WEEK 9-10: Color + VFX -->
+      <div class="week-label"><span>🎨 Week 9–10 · Aug 16–24 · Color Grade & VFX</span><span class="pill grey">Not started</span></div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">VFX compositing (3 shots)</div><div class="task-owner">Title sequence, 2 practical effect enhancements</div></div>
+        <div class="post-task-cell">VFX — Freelance</div>
+        <div class="post-task-cell">4 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">DaVinci Resolve color grade</div><div class="task-owner">Cold, desaturated look — reference: Hereditary, Midsommar</div></div>
+        <div class="post-task-cell">Colorist — Jan D.</div>
+        <div class="post-task-cell">3 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Director color review</div><div class="task-owner">1 round of notes max after initial grade</div></div>
+        <div class="post-task-cell">Director + Colorist</div>
+        <div class="post-task-cell">1 day</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+
+      <!-- WEEK 11-12: Delivery -->
+      <div class="week-label"><span>📦 Week 11–12 · Aug 25 – Sep 12 · QC & Delivery</span><span class="pill grey">Not started</span></div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Technical QC — frame rate, levels, loudness</div><div class="task-owner">LUFS check, EBU R128, black levels, codec</div></div>
+        <div class="post-task-cell">Editor + Sound</div>
+        <div class="post-task-cell">1 day</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Closed captions + subtitles (EN)</div><div class="task-owner">SRT file + burned-in version</div></div>
+        <div class="post-task-cell">Editor</div>
+        <div class="post-task-cell">1 day</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">DCP export (festival print)</div><div class="task-owner">2K DCP, JPEG2000, Dolby/SMPTE</div></div>
+        <div class="post-task-cell">Editor + DIT</div>
+        <div class="post-task-cell">1 day</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">Trailer cut + social versions</div><div class="task-owner">90s trailer + 30s + 15s cutdowns</div></div>
+        <div class="post-task-cell">Editor</div>
+        <div class="post-task-cell">2 days</div>
+        <div class="post-task-cell"><span class="pill grey">Not started</span></div>
+      </div>
+      <div class="post-task-row">
+        <div class="post-task-main"><div class="task-name">🏁 ALL DELIVERABLES COMPLETE</div><div class="task-owner">Archive + final delivery to all stakeholders</div></div>
+        <div class="post-task-cell">Producer</div>
+        <div class="post-task-cell">Sep 12, 2026</div>
+        <div class="post-task-cell"><span class="pill blue">Target</span></div>
+      </div>
+    </div>
+
+    <!-- Deliverables -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">📦 Final Deliverables Checklist</span></div>
+      <table class="data-table">
+        <thead><tr><th>Format</th><th>Specs</th><th>For</th><th>Deadline</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>DCP (festival print)</td><td class="amount">2K · 24fps · JPEG2000 · 5.1</td><td>Film festivals</td><td class="amount">Sep 12</td><td><span class="pill grey">Pending</span></td></tr>
+          <tr><td>ProRes 4444 (master)</td><td class="amount">4K · 25fps · archive quality</td><td>Archive / broadcast</td><td class="amount">Sep 12</td><td><span class="pill grey">Pending</span></td></tr>
+          <tr><td>H264 screener</td><td class="amount">1080p · 24fps · password protected</td><td>Online submissions</td><td class="amount">Sep 12</td><td><span class="pill grey">Pending</span></td></tr>
+          <tr><td>Trailer (90s)</td><td class="amount">1080p · H264 · stereo</td><td>Instagram / YouTube</td><td class="amount">Sep 5</td><td><span class="pill grey">Pending</span></td></tr>
+          <tr><td>Social cutdowns</td><td class="amount">9:16 · 30s + 15s vertical</td><td>IG Reels / TikTok</td><td class="amount">Sep 5</td><td><span class="pill grey">Pending</span></td></tr>
+          <tr><td>Subtitle file (EN)</td><td class="amount">.SRT + burned-in version</td><td>Festivals + streaming</td><td class="amount">Sep 12</td><td><span class="pill grey">Pending</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PANEL 4: SHOOTING PLAN -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="panel" id="panel-shooting">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🎥 Advanced Shooting Plan</div>
+        <div class="section-subtitle">Scene breakdown · "LIANNE" · 4 shoot days · Location: Remote house, outskirts Amsterdam</div>
+      </div>
+      <div class="section-badge">28 scenes · 4 days</div>
+    </div>
+
+    <div class="stats-grid mb-24">
+      <div class="stat-card"><div class="stat-label">Total Scenes</div><div class="stat-value">28</div><div class="stat-sub">Incl. 4 VFX shots</div></div>
+      <div class="stat-card blue"><div class="stat-label">Total Script Pages</div><div class="stat-value">24</div><div class="stat-sub">avg 6 pages/day</div></div>
+      <div class="stat-card orange"><div class="stat-label">Night Shoots</div><div class="stat-value">3</div><div class="stat-sub">Days 2, 3 & 4 — call 18:00</div></div>
+      <div class="stat-card green"><div class="stat-label">Locations</div><div class="stat-value">4</div><div class="stat-sub">All within same property</div></div>
+      <div class="stat-card red"><div class="stat-label">SFX Scenes</div><div class="stat-value">6</div><div class="stat-sub">Practical effects required</div></div>
+    </div>
+
+    <!-- DAY 1 -->
+    <div class="card mb-20">
+      <div class="day-header">
+        <div class="day-num">1</div>
+        <div>
+          <div class="day-label">Day 1 — Friday June 12</div>
+          <div class="day-meta">Call: 07:00 · Wrap: 18:00 · INT scenes · Living room + Kitchen · 7 scenes · 6.5 pages</div>
+        </div>
+        <span class="pill green" style="margin-left:auto">Confirmed</span>
+      </div>
+      <div class="scene-header">
+        <span>#</span><span>Scene</span><span>Pg / Setup</span><span>INT/EXT</span><span>Cast</span><span>Status</span>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">1A</div>
+        <div class="scene-main"><div class="scene-name">Friends arrive at house — establishing</div><div class="scene-desc">Wide establishing, dolly in. Golden hour. Group energy, excitement. Camera A wide + B close coverage.</div></div>
+        <div class="scene-cell">1.5p · 4 setups</div>
+        <div class="scene-cell"><span class="pill blue">EXT · Day</span></div>
+        <div class="scene-cell">All 6</div>
+        <div class="scene-cell"><span class="pill green">Ready</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">2A</div>
+        <div class="scene-main"><div class="scene-name">Unpacking — kitchen discovery</div><div class="scene-desc">Lianne notices something off in the kitchen. Handheld. Close on hands, objects. Tension setup.</div></div>
+        <div class="scene-cell">0.5p · 3 setups</div>
+        <div class="scene-cell"><span class="pill orange">INT · Day</span></div>
+        <div class="scene-cell">Lianne, Emma</div>
+        <div class="scene-cell"><span class="pill green">Ready</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">3B</div>
+        <div class="scene-main"><div class="scene-name">Group dinner — false calm</div><div class="scene-desc">Warm, normal dinner scene. Builds audience comfort before Act 2. Steadicam around table. Natural light + practicals.</div></div>
+        <div class="scene-cell">1.5p · 6 setups</div>
+        <div class="scene-cell"><span class="pill orange">INT · Eve</span></div>
+        <div class="scene-cell">All 6</div>
+        <div class="scene-cell"><span class="pill green">Ready</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">4A</div>
+        <div class="scene-main"><div class="scene-name">Lianne alone — first vision 🎭 SFX</div><div class="scene-desc">Jump scare + practical SFX: mirror gag. Tight close-up then reveal. SFX makeup required. 2 takes minimum.</div></div>
+        <div class="scene-cell">0.5p · 2 setups</div>
+        <div class="scene-cell"><span class="pill orange">INT · Eve</span></div>
+        <div class="scene-cell">Lianne only</div>
+        <div class="scene-cell"><span class="pill red">⚠️ SFX</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">5C</div>
+        <div class="scene-main"><div class="scene-name">Bedtime — hallway creaks</div><div class="scene-desc">Low angle tracking shot down dark hallway. Atmospheric build. Only practical lighting (ceiling fixtures). Silent scene.</div></div>
+        <div class="scene-cell">1p · 3 setups</div>
+        <div class="scene-cell"><span class="pill purple">INT · Night</span></div>
+        <div class="scene-cell">Lianne, Marcus</div>
+        <div class="scene-cell"><span class="pill orange">Check light</span></div>
+      </div>
+    </div>
+
+    <!-- DAY 2 -->
+    <div class="card mb-20">
+      <div class="day-header">
+        <div class="day-num" style="background:var(--purple)">2</div>
+        <div>
+          <div class="day-label">Day 2 — Saturday June 13</div>
+          <div class="day-meta">Call: 10:00 · Night call: 18:00 · Basement + Living room · 8 scenes · 7 pages · Heavy SFX day</div>
+        </div>
+        <span class="pill orange" style="margin-left:auto">SFX Intensive</span>
+      </div>
+      <div class="scene-header">
+        <span>#</span><span>Scene</span><span>Pg / Setup</span><span>INT/EXT</span><span>Cast</span><span>Status</span>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">8A</div>
+        <div class="scene-main"><div class="scene-name">Basement exploration — Act 2 open 🎭 SFX</div><div class="scene-desc">Group finds hidden room. Practical SFX: blood smear, old photographs. Full SFX makeup for hidden figure. Fog machine.</div></div>
+        <div class="scene-cell">2p · 8 setups</div>
+        <div class="scene-cell"><span class="pill purple">INT · Night</span></div>
+        <div class="scene-cell">All 6</div>
+        <div class="scene-cell"><span class="pill red">⚠️ SFX Heavy</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">9B</div>
+        <div class="scene-main"><div class="scene-name">Phone signal lost — group tension</div><div class="scene-desc">Character conflict escalation. Two-shot, then cross-cutting close-ups. Shallow DOF on Sigma 35mm.</div></div>
+        <div class="scene-cell">1p · 4 setups</div>
+        <div class="scene-cell"><span class="pill orange">INT · Night</span></div>
+        <div class="scene-cell">Emma, Marcus</div>
+        <div class="scene-cell"><span class="pill green">Ready</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">11A</div>
+        <div class="scene-main"><div class="scene-name">The apparition — hallway confrontation 🎭 VFX</div><div class="scene-desc">Key horror moment. B-camera crash zoom. VFX enhancement in post. Practical light flicker rig. Multiple safety takes.</div></div>
+        <div class="scene-cell">1.5p · 6 setups</div>
+        <div class="scene-cell"><span class="pill purple">INT · Night</span></div>
+        <div class="scene-cell">Lianne, Figure</div>
+        <div class="scene-cell"><span class="pill red">⚠️ SFX + VFX</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">13C</div>
+        <div class="scene-main"><div class="scene-name">Car escape attempt — doesn't start</div><div class="scene-desc">EXT night. Battery-dead car gag. Practical steam from hood. Backlit by headlights. Generator on standby.</div></div>
+        <div class="scene-cell">1p · 4 setups</div>
+        <div class="scene-cell"><span class="pill purple">EXT · Night</span></div>
+        <div class="scene-cell">Marcus, Sofia</div>
+        <div class="scene-cell"><span class="pill orange">Generator needed</span></div>
+      </div>
+    </div>
+
+    <!-- DAY 3 -->
+    <div class="card mb-20">
+      <div class="day-header">
+        <div class="day-num" style="background:var(--orange)">3</div>
+        <div>
+          <div class="day-label">Day 3 — Sunday June 14</div>
+          <div class="day-meta">Call: 08:00 · Split day · Bedroom + Bathroom + Attic · 7 scenes · 5.5 pages</div>
+        </div>
+        <span class="pill blue" style="margin-left:auto">Split Day</span>
+      </div>
+      <div class="scene-header">
+        <span>#</span><span>Scene</span><span>Pg / Setup</span><span>INT/EXT</span><span>Cast</span><span>Status</span>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">16A</div>
+        <div class="scene-main"><div class="scene-name">Attic discovery — the truth revealed</div><div class="scene-desc">Dusty attic, single overhead lamp. Lianne finds old newspapers. Handheld, tight spaces. Production design intensive.</div></div>
+        <div class="scene-cell">1.5p · 5 setups</div>
+        <div class="scene-cell"><span class="pill orange">INT · Day</span></div>
+        <div class="scene-cell">Lianne</div>
+        <div class="scene-cell"><span class="pill orange">Art dept check</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">18B</div>
+        <div class="scene-main"><div class="scene-name">Bathroom mirror — full SFX reveal 🎭 SFX</div><div class="scene-desc">Biggest SFX makeup moment. 3-hour makeup call. Shot reverse shot + POV. Multiple angles. Allow 90min for setup.</div></div>
+        <div class="scene-cell">1p · 3 setups</div>
+        <div class="scene-cell"><span class="pill orange">INT · Day</span></div>
+        <div class="scene-cell">Lianne + Figure</div>
+        <div class="scene-cell"><span class="pill red">⚠️ SFX 3hr makeup</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">22A</div>
+        <div class="scene-main"><div class="scene-name">Friends confrontation — climax build</div><div class="scene-desc">Ensemble scene. Character splits into groups. Rapid coverage, lots of angles. Allow 2h for full coverage.</div></div>
+        <div class="scene-cell">2p · 10 setups</div>
+        <div class="scene-cell"><span class="pill purple">INT · Night</span></div>
+        <div class="scene-cell">All 6</div>
+        <div class="scene-cell"><span class="pill green">Ready</span></div>
+      </div>
+    </div>
+
+    <!-- DAY 4 -->
+    <div class="card mb-24">
+      <div class="day-header">
+        <div class="day-num" style="background:var(--red)">4</div>
+        <div>
+          <div class="day-label">Day 4 — Monday June 15 · FINAL DAY</div>
+          <div class="day-meta">Call: 16:00 · Full night shoot · Exterior + Interior · Climax + Resolution · 6 scenes · 5 pages</div>
+        </div>
+        <span class="pill red" style="margin-left:auto">Night shoot — Climax</span>
+      </div>
+      <div class="scene-header">
+        <span>#</span><span>Scene</span><span>Pg / Setup</span><span>INT/EXT</span><span>Cast</span><span>Status</span>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">25A</div>
+        <div class="scene-main"><div class="scene-name">Forest chase sequence 🎭 Stunt</div><div class="scene-desc">Handheld + Ronin chase through trees. Night. Crew with lights on backs. Pre-mapped route. Safety briefing required. No running on wet ground.</div></div>
+        <div class="scene-cell">1.5p · 6 setups</div>
+        <div class="scene-cell"><span class="pill purple">EXT · Night</span></div>
+        <div class="scene-cell">Lianne, Sofia, Figure</div>
+        <div class="scene-cell"><span class="pill red">⚠️ Stunt coord</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">26B</div>
+        <div class="scene-main"><div class="scene-name">Climax — house front door</div><div class="scene-desc">Lighting-heavy setup. 600D backlight, fog machine, rain rig if possible. Emotional peak. Allow extra coverage time.</div></div>
+        <div class="scene-cell">1p · 5 setups</div>
+        <div class="scene-cell"><span class="pill purple">EXT · Night</span></div>
+        <div class="scene-cell">Lianne + All</div>
+        <div class="scene-cell"><span class="pill orange">Rain rig TBC</span></div>
+      </div>
+      <div class="scene-row">
+        <div class="scene-num">28</div>
+        <div class="scene-main"><div class="scene-name">Final shot — sunrise, single figure (LAST)</div><div class="scene-desc">Sunrise EXT. Lianne alone. Wide, static, poetic. Real sunrise — must be before 06:15. Allow 45min for magic hour.</div></div>
+        <div class="scene-cell">0.5p · 2 setups</div>
+        <div class="scene-cell"><span class="pill blue">EXT · Dawn</span></div>
+        <div class="scene-cell">Lianne only</div>
+        <div class="scene-cell"><span class="pill green">⏰ Sunrise 06:10</span></div>
+      </div>
+    </div>
+
+    <!-- Equipment list -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🎥 Camera Package</span></div>
+        <table class="data-table">
+          <tbody>
+            <tr><td>A-Cam body</td><td class="amount">BMPCC 6K Pro</td><td><span class="pill green">Confirmed</span></td></tr>
+            <tr><td>B-Cam body</td><td class="amount">Sony FX3</td><td><span class="pill orange">Pending</span></td></tr>
+            <tr><td>Lenses (A-cam)</td><td class="amount">Sigma Art 18/35/50/85mm</td><td><span class="pill green">Confirmed</span></td></tr>
+            <tr><td>Stabilizer</td><td class="amount">DJI Ronin RS3 Pro</td><td><span class="pill green">Confirmed</span></td></tr>
+            <tr><td>Wireless monitor</td><td class="amount">SmallHD Focus 5</td><td><span class="pill green">Confirmed</span></td></tr>
+            <tr><td>Media (SSD + CFE)</td><td class="amount">2TB × 4</td><td><span class="pill green">Confirmed</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">💡 Lighting Package</span></div>
+        <table class="data-table">
+          <tbody>
+            <tr><td>Key light</td><td class="amount">Aputure 600D Pro</td><td><span class="pill green">Confirmed</span></td></tr>
+            <tr><td>Fill / background</td><td class="amount">Aputure 300D II × 2</td><td><span class="pill green">Confirmed</span></td></tr>
+            <tr><td>Practicals / accent</td><td class="amount">Nanlite Pavotube 15C × 4</td><td><span class="pill orange">Pending</span></td></tr>
+            <tr><td>Fog machine</td><td class="amount">Antari Z-1500II</td><td><span class="pill green">Confirmed</span></td></tr>
+            <tr><td>Flicker controller</td><td class="amount">Lykos Bi-Color + flicker rig</td><td><span class="pill orange">Build needed</span></td></tr>
+            <tr><td>Generator (EXT)</td><td class="amount">Honda EU70is 7kW</td><td><span class="pill orange">Rental TBC</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- PANEL 5: SOCIAL MEDIA DISTRIBUTION -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="panel" id="panel-social">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📲 Distribution Strategy</div>
+        <div class="section-subtitle">Social media rollout + festival submission plan — "LIANNE" · Sep 2026 onwards</div>
+      </div>
+      <div class="section-badge">A22 Films · 13K audience</div>
+    </div>
+
+    <div class="stats-grid mb-24">
+      <div class="stat-card blue"><div class="stat-label">Total Reach</div><div class="stat-value">13K</div><div class="stat-sub">Instagram primary audience</div></div>
+      <div class="stat-card green"><div class="stat-label">Festival Targets</div><div class="stat-value">12</div><div class="stat-sub">Festivals submitted to</div></div>
+      <div class="stat-card orange"><div class="stat-label">Content Pieces</div><div class="stat-value">48</div><div class="stat-sub">Across 12-week campaign</div></div>
+      <div class="stat-card purple"><div class="stat-label">Premiere Target</div><div class="stat-value" style="font-size:18px">Jan '27</div><div class="stat-sub">IFFR Rotterdam</div></div>
+      <div class="stat-card"><div class="stat-label">Embargo Lift</div><div class="stat-value" style="font-size:18px">Sep 15</div><div class="stat-sub">2026 — trailer drops</div></div>
+    </div>
+
+    <!-- PHASES -->
+    <div class="card mb-20">
+      <div class="card-header"><span class="card-title">🗓 Campaign Phases</span></div>
+      <table class="data-table">
+        <thead><tr><th>Phase</th><th>Timeline</th><th>Goal</th><th>Content Type</th><th>Platforms</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>🤫 Teaser Phase</strong></td>
+            <td class="amount">Sep 1–14</td>
+            <td>Build curiosity, zero reveals</td>
+            <td>Cryptic stills, soundbites, BTS atmosphere</td>
+            <td>IG · TikTok</td>
+          </tr>
+          <tr>
+            <td><strong>🚀 Launch Phase</strong></td>
+            <td class="amount">Sep 15 · Trailer drop</td>
+            <td>Max reach on release day</td>
+            <td>90s trailer + 30s cutdown simultaneously</td>
+            <td>IG · YouTube · TikTok · FB</td>
+          </tr>
+          <tr>
+            <td><strong>📣 Momentum Phase</strong></td>
+            <td class="amount">Sep 16 – Oct 31</td>
+            <td>Sustain audience, festival buzz</td>
+            <td>BTS reels, cast interviews, production stories</td>
+            <td>IG · YouTube · TikTok</td>
+          </tr>
+          <tr>
+            <td><strong>🏆 Festival Phase</strong></td>
+            <td class="amount">Nov – Jan 2027</td>
+            <td>Industry credibility, press coverage</td>
+            <td>Selection announcements, reviews, press quotes</td>
+            <td>IG · LinkedIn · Press kit</td>
+          </tr>
+          <tr>
+            <td><strong>🌐 Online Release</strong></td>
+            <td class="amount">Post-festival embargo</td>
+            <td>Organic reach, streaming revenue</td>
+            <td>Full film drop, YouTube premiere</td>
+            <td>YouTube · Vimeo · Short Film Depot</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- INSTAGRAM -->
+    <div class="card mb-16 platform-section">
+      <div class="platform-header">
+        <span class="platform-icon">📷</span>
+        <div>
+          <div class="platform-name">Instagram</div>
+          <div class="platform-handle">@a22_films · 13K followers</div>
+        </div>
+        <div class="platform-kpi">
+          <div class="kpi-item"><div class="kpi-val">3–4×</div><div class="kpi-lbl">posts/week</div></div>
+          <div class="kpi-item"><div class="kpi-val">Reels</div><div class="kpi-lbl">priority format</div></div>
+          <div class="kpi-item"><div class="kpi-val">4–6%</div><div class="kpi-lbl">target ER</div></div>
+        </div>
+      </div>
+      <div class="social-header">
+        <span>Week</span><span>Content</span><span>Format</span><span>CTA</span><span>Expected reach</span><span>Status</span>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 1</div>
+        <div class="social-cell primary">Cryptic still — dark hallway, no context</div>
+        <div class="social-cell">Static post</div>
+        <div class="social-cell">💬 "Name it"</div>
+        <div class="social-cell">8–12K</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 5</div>
+        <div class="social-cell primary">BTS — crew setting up fog machine at night</div>
+        <div class="social-cell">Reel 30s</div>
+        <div class="social-cell">🔔 Turn on notifs</div>
+        <div class="social-cell">15–25K</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 10</div>
+        <div class="social-cell primary">Sound teaser — horror audio only, black screen</div>
+        <div class="social-cell">Reel 15s</div>
+        <div class="social-cell">🔊 "Listen closely"</div>
+        <div class="social-cell">20–40K</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 15 🚀</div>
+        <div class="social-cell primary">TRAILER DROP — official 90s trailer</div>
+        <div class="social-cell">Reel (main)</div>
+        <div class="social-cell">🎬 Link in bio</div>
+        <div class="social-cell">30–80K</div>
+        <div class="social-cell"><span class="pill blue">Key date</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 19</div>
+        <div class="social-cell primary">Reaction compilation — trailer response clips</div>
+        <div class="social-cell">Reel 30s</div>
+        <div class="social-cell">🔁 Share</div>
+        <div class="social-cell">10–20K</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 22</div>
+        <div class="social-cell primary">Cast intro carousel — 6 characters, each a slide</div>
+        <div class="social-cell">Carousel</div>
+        <div class="social-cell">💬 "Which one are you?"</div>
+        <div class="social-cell">8–15K</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Oct W1–W4</div>
+        <div class="social-cell primary">Weekly BTS reels — lighting, sound, directing</div>
+        <div class="social-cell">Reel 60s</div>
+        <div class="social-cell">💾 Save this</div>
+        <div class="social-cell">12–18K ea.</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Oct W2</div>
+        <div class="social-cell primary">🎯 Template promo — "We use this in real productions"</div>
+        <div class="social-cell">Reel + Story</div>
+        <div class="social-cell">🛍 Link in bio → a22films.com</div>
+        <div class="social-cell">10–20K</div>
+        <div class="social-cell"><span class="pill purple">💰 Revenue</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Nov onward</div>
+        <div class="social-cell primary">Festival selection announcements</div>
+        <div class="social-cell">Static + Story</div>
+        <div class="social-cell">🏆 Credibility</div>
+        <div class="social-cell">5–10K ea.</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+    </div>
+
+    <!-- YOUTUBE -->
+    <div class="card mb-16 platform-section">
+      <div class="platform-header">
+        <span class="platform-icon">▶️</span>
+        <div>
+          <div class="platform-name">YouTube</div>
+          <div class="platform-handle">A22 Films channel · Long-form priority</div>
+        </div>
+        <div class="platform-kpi">
+          <div class="kpi-item"><div class="kpi-val">1–2×</div><div class="kpi-lbl">videos/week</div></div>
+          <div class="kpi-item"><div class="kpi-val">Long-form</div><div class="kpi-lbl">priority format</div></div>
+          <div class="kpi-item"><div class="kpi-val">Watch time</div><div class="kpi-lbl">primary KPI</div></div>
+        </div>
+      </div>
+      <div class="social-header">
+        <span>Date</span><span>Content</span><span>Format</span><span>CTA</span><span>Expected views</span><span>Status</span>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 15</div>
+        <div class="social-cell primary">Official trailer premiere event</div>
+        <div class="social-cell">YouTube Premiere</div>
+        <div class="social-cell">🔔 Subscribe</div>
+        <div class="social-cell">2–5K views</div>
+        <div class="social-cell"><span class="pill blue">Key date</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Oct 1</div>
+        <div class="social-cell primary">"Making LIANNE" — full 15min BTS documentary</div>
+        <div class="social-cell">Long-form 15min</div>
+        <div class="social-cell">💬 Comment</div>
+        <div class="social-cell">3–8K views</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Oct 15</div>
+        <div class="social-cell primary">"How we lit the horror scenes" — filmmaker breakdown</div>
+        <div class="social-cell">Educational 10min</div>
+        <div class="social-cell">🛍 Template in desc</div>
+        <div class="social-cell">5–15K views</div>
+        <div class="social-cell"><span class="pill purple">💰 Revenue</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Post-festival</div>
+        <div class="social-cell primary">Full film premiere — free on YouTube</div>
+        <div class="social-cell">Film (20–30min)</div>
+        <div class="social-cell">🎬 Watch free</div>
+        <div class="social-cell">10–50K views</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+    </div>
+
+    <!-- TIKTOK -->
+    <div class="card mb-16 platform-section">
+      <div class="platform-header">
+        <span class="platform-icon">🎵</span>
+        <div>
+          <div class="platform-name">TikTok</div>
+          <div class="platform-handle">@a22films · Growth play</div>
+        </div>
+        <div class="platform-kpi">
+          <div class="kpi-item"><div class="kpi-val">4–5×</div><div class="kpi-lbl">posts/week</div></div>
+          <div class="kpi-item"><div class="kpi-val">Viral</div><div class="kpi-lbl">primary goal</div></div>
+          <div class="kpi-item"><div class="kpi-val">New reach</div><div class="kpi-lbl">outside IG audience</div></div>
+        </div>
+      </div>
+      <div class="social-header">
+        <span>Date</span><span>Content</span><span>Format</span><span>CTA</span><span>Expected reach</span><span>Status</span>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 1–14</div>
+        <div class="social-cell primary">"Things that happened during our horror shoot" series</div>
+        <div class="social-cell">PoV · 30–60s</div>
+        <div class="social-cell">🔁 Part 2?</div>
+        <div class="social-cell">10K–500K+</div>
+        <div class="social-cell"><span class="pill orange">Viral potential</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Sep 15</div>
+        <div class="social-cell primary">Trailer reaction + commentary by director</div>
+        <div class="social-cell">Duet format</div>
+        <div class="social-cell">💬 Watch trailer</div>
+        <div class="social-cell">5–50K</div>
+        <div class="social-cell"><span class="pill grey">Planned</span></div>
+      </div>
+      <div class="social-row">
+        <div class="social-cell primary">Ongoing</div>
+        <div class="social-cell primary">"Film school nobody taught you" — production tips</div>
+        <div class="social-cell">Educational 60s</div>
+        <div class="social-cell">🛍 Templates</div>
+        <div class="social-cell">Varies widely</div>
+        <div class="social-cell"><span class="pill purple">💰 Revenue</span></div>
+      </div>
+    </div>
+
+    <!-- FESTIVAL SUBMISSIONS -->
+    <div class="card mb-24">
+      <div class="card-header"><span class="card-title">🏆 Festival Submission Plan</span></div>
+      <table class="data-table">
+        <thead><tr><th>Festival</th><th>Country</th><th>Tier</th><th>Deadline</th><th>Fee</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>IFFR — Int'l Film Festival Rotterdam</td><td>🇳🇱 NL</td><td><span class="pill blue">A-List</span></td><td class="amount">Nov 15, 2026</td><td class="amount">€0</td><td><span class="pill grey">Planned</span></td></tr>
+          <tr><td>Fantastic Fest</td><td>🇺🇸 US</td><td><span class="pill blue">Horror A-List</span></td><td class="amount">Sep 1, 2026</td><td class="amount">$60</td><td><span class="pill orange">Check dates</span></td></tr>
+          <tr><td>Sitges Film Festival</td><td>🇪🇸 ES</td><td><span class="pill blue">Horror A-List</span></td><td class="amount">May 2026</td><td class="amount">€0</td><td><span class="pill red">Date passed</span></td></tr>
+          <tr><td>Imagine Film Festival</td><td>🇳🇱 NL</td><td><span class="pill green">Regional</span></td><td class="amount">Dec 1, 2026</td><td class="amount">€0</td><td><span class="pill grey">Planned</span></td></tr>
+          <tr><td>Filmfest Hamburg</td><td>🇩🇪 DE</td><td><span class="pill green">Regional</span></td><td class="amount">Jun 30, 2026</td><td class="amount">€0</td><td><span class="pill orange">Check shorts</span></td></tr>
+          <tr><td>Tribeca Film Festival</td><td>🇺🇸 US</td><td><span class="pill purple">Premium</span></td><td class="amount">Jan 2027</td><td class="amount">$75</td><td><span class="pill grey">Planned</span></td></tr>
+          <tr><td>Short Film Corner — Cannes</td><td>🇫🇷 FR</td><td><span class="pill purple">Premium</span></td><td class="amount">Mar 2027</td><td class="amount">€95</td><td><span class="pill grey">Planned</span></td></tr>
+          <tr><td>Horror-on-Sea Film Festival</td><td>🇬🇧 UK</td><td><span class="pill green">Horror niche</span></td><td class="amount">Oct 2026</td><td class="amount">£15</td><td><span class="pill grey">Planned</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Monetization through content -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">💰 Content → Revenue Map</span></div>
+      <table class="data-table">
+        <thead><tr><th>Content Piece</th><th>Platform</th><th>Monetization method</th><th>Est. revenue</th></tr></thead>
+        <tbody>
+          <tr><td>"How we planned this shoot" reel</td><td>IG + TikTok</td><td>CTA → Template pack in bio → Gumroad/Squarespace</td><td class="amount highlight">€200–600</td></tr>
+          <tr><td>YouTube lighting breakdown video</td><td>YouTube</td><td>Description link to templates + AdSense</td><td class="amount highlight">€150–400</td></tr>
+          <tr><td>"Film Production Toolkit" promo reel</td><td>IG Stories</td><td>Swipe-up → direct purchase</td><td class="amount highlight">€400–1,200</td></tr>
+          <tr><td>Newsletter email (sign-ups from website)</td><td>Email</td><td>Dedicated template launch email to list</td><td class="amount highlight">€300–800</td></tr>
+          <tr><td>Live Q&A / workshop about pre-production</td><td>IG Live</td><td>Paid replay or Zoom workshop ticket €25–40</td><td class="amount highlight">€500–1,000</td></tr>
+          <tr><td>TikTok production tips series</td><td>TikTok</td><td>Audience growth → funnel to IG + website</td><td class="amount">Brand awareness</td></tr>
+          <tr><td colspan="3" style="font-weight:600;color:var(--text-primary)">Total Est. Campaign Revenue (templates + workshops)</td><td class="amount" style="color:var(--green);font-size:14px;font-weight:700">€1,550–4,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footnote">
+    <div class="footnote-brand"><strong>A22 Films</strong> · Production Toolkit v1.0 · "LIANNE" Project · Amsterdam 2026</div>
+    <div class="footnote-copy">a22films.com · @a22_films · © 2026</div>
+  </div>
+
+</div>
+
+<script>
+  function showTab(name) {
+    // Deactivate all
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    // Activate selected
+    document.getElementById('panel-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+</script>
+</body>
+</html>
